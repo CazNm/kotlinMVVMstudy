@@ -19,6 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -26,36 +31,43 @@ class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel> { MainViewModelFactory(TempMyRepositoryImpl()) }
 //    private val viewModel by viewModels<MainViewModel>()
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
 
             Text("this is test")
-            val mainModels = viewModel.mainModles.observeAsState().value ?: emptyList()
-            val clickedModel = viewModel.onItemClickEvent.observeAsState().value
+//            val clickedModel = viewModel.onItemClickEvent.observeAsState().value
 
-            MainModelList(models = mainModels, onItemClick = viewModel::onItemClick)
-
-            if (clickedModel != null) {
-                ComposableToast(clickedModel.title)
+            MainModelList(models = viewModel.mainModels.observeAsState().value) {
+                println(it)
             }
+
+//            if (clickedModel != null) {
+//                ComposableToast(clickedModel.title)
+//            }
         }
 
-        viewModel.loadMainModels()
+       viewModel.getMainModels()
     }
 }
 
 @Composable
-fun MainModelList(models: List<MainModel>, onItemClick : (Int) -> Unit = {} ){
+fun MainModelList(models: List<MainModel>?, onItemClick : (Int) -> Unit = {} ){
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        itemsIndexed(models) {
-            index, item -> MainModelListItem(model = item) { onItemClick(index) }
-        }
+
+       if(models != null)
+       {
+           itemsIndexed(models) {
+                   index, item -> MainModelListItem(model = item) { onItemClick(index) }
+           }
+       }
     }
 }
 

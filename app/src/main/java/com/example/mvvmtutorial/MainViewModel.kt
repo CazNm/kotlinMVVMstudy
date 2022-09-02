@@ -1,31 +1,33 @@
 package com.example.mvvmtutorial
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.lang.IllegalArgumentException
 
 class MainViewModel(private val repository : MyRepository) : ViewModel() {
 
-    private val _mainModels : MutableLiveData<List<MainModel>> = MutableLiveData()
-    val mainModles : LiveData<List<MainModel>> = _mainModels
+    private var _mainModels = MutableLiveData<List<MainModel>>()
+    var mainModels : LiveData<List<MainModel>> = _mainModels
+
     val onItemClickEvent : MutableLiveData<MainModel> = MutableLiveData()
 
-    fun loadMainModels() {
-        repository.getModels().let {
-            _mainModels.postValue(it) //Background Thread 에서 돌아간다
-            //_mainModels.value = it // Main Thread 에서 돌아간다. 즉각적으로 반응
+   private fun loadMainModels() : Flow<List<MainModel>> = flow {
+        emit(repository.getModels())
+    }
+
+    fun getMainModels() {
+        viewModelScope.launch {
+            loadMainModels().collect {
+                _mainModels.value = it
+            }
         }
     }
 
     fun onItemClick(position : Int)
     {
         println("click function active")
-        _mainModels.value?.getOrNull(position)?.let {
-            onItemClickEvent.postValue(it)
-        }
     }
 }
 
